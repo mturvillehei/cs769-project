@@ -1,18 +1,15 @@
-from typing import Optional, Tuple, Union
-
 import numpy as np
 import torch
 import torch.nn as nn
-from transformers.pytorch_utils import Conv1D
-from transformers.models.gpt2.modeling_gpt2 import GPT2SdpaAttention
+from transformers.models.gpt2.modeling_gpt2 import GPT2SdpaAttention, GPT2FlashAttention2
 
 class LoRA(nn.Module):
 
-    def __init__(self, feat_in, feat_out, rank=8, alpha=1):
+    def __init__(self, feat_in, feat_out, rank=8, alpha=16):
         super().__init__()
-        self.scale = torch.tensor(alpha/rank)
-        self.A_mat = nn.Parameter(torch.empty(feat_in,rank))
-        self.B_mat = nn.Parameter(torch.zeros(rank, feat_out))
+        self.scale = torch.tensor((alpha/rank), dtype=torch.bfloat16)
+        self.A_mat = nn.Parameter(torch.empty((feat_in,rank), dtype=torch.bfloat16))
+        self.B_mat = nn.Parameter(torch.zeros((rank, feat_out), dtype=torch.bfloat16))
         nn.init.kaiming_uniform_(self.A_mat, a=np.sqrt(5))
 
     def forward(self, x):
@@ -21,7 +18,7 @@ class LoRA(nn.Module):
 
 
 class LoRAAttentionLayer(nn.Module):
-    def __init__(self, attn_layer:nn.Module, rank=8, alpha=1, trainable=False):
+    def __init__(self, attn_layer:nn.Module, rank=8, alpha=16, trainable=False):
         super().__init__()
         self.base = attn_layer
         self.feat_in = self.feat_out = attn_layer.nx
@@ -41,7 +38,7 @@ class LoRAAttentionLayer(nn.Module):
 def add_lora_attention_layers(model, target_modules='c_attn', rank=8, alpha=16):
     to_change = []
     for name, module in model.named_modules():
-       if type(module) is GPT2SdpaAttention:
+       if type(module) is GPT2SdpaAttention or type(module) is GPT2FlashAttention2:
            to_change.append((name,module))
     for i in to_change:
         i[1].set_submodule(target_modules, LoRAAttentionLayer(i[1].c_attn, rank=rank, alpha=alpha))
