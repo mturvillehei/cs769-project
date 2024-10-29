@@ -6,7 +6,7 @@
 
 % Change "review" to "final" to generate the final (sometimes called camera-ready) version.
 % Change to "preprint" to generate a non-anonymous version with page numbers.
-\usepackage[review]{acl}
+\usepackage[preprint]{acl}
 
 % Standard package includes
 \usepackage{times}
@@ -14,9 +14,6 @@
 
 % For proper rendering and hyphenation of words containing Latin characters (including in bib files)
 \usepackage[T1]{fontenc}
-% For Vietnamese characters
-% \usepackage[T5]{fontenc}
-% See https://www.latex-project.org/help/documentation/encguide.pdf for other character sets
 
 % This assumes your files are encoded as UTF8
 \usepackage[utf8]{inputenc}
@@ -30,336 +27,90 @@
 % However, it will improve the aesthetics of text in
 % the typewriter font.
 \usepackage{inconsolata}
-
-%Including images in your LaTeX document requires adding
-%additional package(s)
 \usepackage{graphicx}
 
-% If the title and author information does not fit in the area allocated, uncomment the following
-%
-%\setlength\titlebox{<dim>}
-%
-% and set <dim> to something 5cm or larger.
 
-\title{Instructions for *ACL Proceedings}
+\title{Exploring Methods for Efficient Fine-tuning of LLMs for Semantic Evaluation}
+\author{
+	Nicholas Boddy \and Caleb Raschka \and Morgan Turville-Heitz \\
+	\textit{University of Wisconsin-Madison}
+}
+\date{\today}
 
-% Author information can be set in various styles:
-% For several authors from the same institution:
-% \author{Author 1 \and ... \and Author n \\
-%         Address line \\ ... \\ Address line}
-% if the names do not fit well on one line use
-%         Author 1 \\ {\bf Author 2} \\ ... \\ {\bf Author n} \\
-% For authors from different institutions:
-% \author{Author 1 \\ Address line \\  ... \\ Address line
-%         \And  ... \And
-%         Author n \\ Address line \\ ... \\ Address line}
-% To start a separate ``row'' of authors use \AND, as in
-% \author{Author 1 \\ Address line \\  ... \\ Address line
-%         \AND
-%         Author 2 \\ Address line \\ ... \\ Address line \And
-%         Author 3 \\ Address line \\ ... \\ Address line}
-
-\author{First Author \\
-  Affiliation / Address line 1 \\
-  Affiliation / Address line 2 \\
-  Affiliation / Address line 3 \\
-  \texttt{email@domain} \\\And
-  Second Author \\
-  Affiliation / Address line 1 \\
-  Affiliation / Address line 2 \\
-  Affiliation / Address line 3 \\
-  \texttt{email@domain} \\}
-
-%\author{
-%  \textbf{First Author\textsuperscript{1}},
-%  \textbf{Second Author\textsuperscript{1,2}},
-%  \textbf{Third T. Author\textsuperscript{1}},
-%  \textbf{Fourth Author\textsuperscript{1}},
-%\\
-%  \textbf{Fifth Author\textsuperscript{1,2}},
-%  \textbf{Sixth Author\textsuperscript{1}},
-%  \textbf{Seventh Author\textsuperscript{1}},
-%  \textbf{Eighth Author \textsuperscript{1,2,3,4}},
-%\\
-%  \textbf{Ninth Author\textsuperscript{1}},
-%  \textbf{Tenth Author\textsuperscript{1}},
-%  \textbf{Eleventh E. Author\textsuperscript{1,2,3,4,5}},
-%  \textbf{Twelfth Author\textsuperscript{1}},
-%\\
-%  \textbf{Thirteenth Author\textsuperscript{3}},
-%  \textbf{Fourteenth F. Author\textsuperscript{2,4}},
-%  \textbf{Fifteenth Author\textsuperscript{1}},
-%  \textbf{Sixteenth Author\textsuperscript{1}},
-%\\
-%  \textbf{Seventeenth S. Author\textsuperscript{4,5}},
-%  \textbf{Eighteenth Author\textsuperscript{3,4}},
-%  \textbf{Nineteenth N. Author\textsuperscript{2,5}},
-%  \textbf{Twentieth Author\textsuperscript{1}}
-%\\
-%\\
-%  \textsuperscript{1}Affiliation 1,
-%  \textsuperscript{2}Affiliation 2,
-%  \textsuperscript{3}Affiliation 3,
-%  \textsuperscript{4}Affiliation 4,
-%  \textsuperscript{5}Affiliation 5
-%\\
-%  \small{
-%    \textbf{Correspondence:} \href{mailto:email@domain}{email@domain}
-%  }
-%}
 
 \begin{document}
 \maketitle
-\begin{abstract}
-This document is a supplement to the general instructions for *ACL authors. It contains instructions for using the \LaTeX{} style files for ACL conferences.
-The document itself conforms to its own specifications, and is therefore an example of what your manuscript should look like.
-These instructions should be used both for papers submitted for review and for final versions of accepted papers.
-\end{abstract}
 
-\section{Introduction}
+\begin{center}
+	\textit{Project Proposal for CS 769 - Advanced Natural Language Processing}
+\end{center}
 
-These instructions are for authors submitting papers to *ACL conferences using \LaTeX. They are not self-contained. All authors must follow the general instructions for *ACL proceedings,\footnote{\url{http://acl-org.github.io/ACLPUB/formatting.html}} and this document contains additional instructions for the \LaTeX{} style files.
 
-The templates include the \LaTeX{} source of this document (\texttt{acl\_latex.tex}),
-the \LaTeX{} style file used to format it (\texttt{acl.sty}),
-an ACL bibliography style (\texttt{acl\_natbib.bst}),
-an example bibliography (\texttt{custom.bib}),
-and the bibliography for the ACL Anthology (\texttt{anthology.bib}).
+\section{Project Overview}
 
-\section{Engines}
+LoRA is a powerful method for the fine-tuning of LLMs (and large models in general) on lower end hardware. As students, engaging with modern machine learning research can be challenging; many of us are limited in computational resources to at best a single commercial CUDA-compatible GPU. For this reason, efficient fine-tuning is exceptionally enticing. We therefore propose to first re-implement LoRA as the first part of our project, with further goals of exploring other fine-tuning methods like QLoRA. We intend to use this fine-tuning work as the foundation for our final project goal of efficient semantic evaluation, and for the initial work (Homework 3) we have reimplemented the fine-tuning of GPT2-Medium via LoRA as shown in Hu et al. (2021). This preliminary work shows the capabilities of LoRA for the fine-tuning of models on at-home hardware, which is a typical limitation for LLMs. 
 
-To produce a PDF file, pdf\LaTeX{} is strongly recommended (over original \LaTeX{} plus dvips+ps2pdf or dvipdf). Xe\LaTeX{} also produces PDF files, and is especially suitable for text in non-Latin scripts.
+We propose that, with either LoRA or QLoRA implementation, we will be able to meet baseline performance on the F1-Macro and F1-Micro metrics for the SEMEVAL 2021 Task 6\footnote{Task: propaganda.math.unipd.it/semeval2021task6/}. SEMEVAL 2021 task 6, titled “Detection of Persuasive Techniques in Texts and Images,” concerns the semantic identification of forms of propagandistic narratives used in memes. In particular, we are interested in which, if any, of 20 forms of narrative technique is utilized in the meme in order to convey an agenda. We will be approaching subtask 1 in particular, because subtask 2 and subtask 3 will require more computing resources than we have access to.  
 
-\section{Preamble}
+In order to achieve these goals, we will be working with three LLM models with sizes appropriate for our at-home resources. We will be looking at mid-sized LLaMa 7B, 13B, GPT2-medium and GPT2-large. These will be fine-tuned off of the SEMEVAL 2021 Task 6 datasets for subtask 1\footnote{Data: github.com/di-dimitrov/SEMEVAL-2021-task6-corpus/tree/main/data}, with the end-goal of predicting the form of propaganda technique in the original meme. Our results for each model will be compared with the other fine tuned models, and will also be compared against the task leaderboard. We expect that the implementation of QLoRA will further increase the capacity for model sizes that we are able to fine tune; if the implementation of QLoRA is successful, we will fine tune even larger models for comparison.
 
-The first line of the file must be
-\begin{quote}
-\begin{verbatim}
-\documentclass[11pt]{article}
-\end{verbatim}
-\end{quote}
+In addition to comparing accuracies of these models against those on the existing leaderboards, we plan to compare both training times and inference times between the models to judge how effectively efficient the various fine-tuning methods are.
 
-To load the style file in the review version:
-\begin{quote}
-\begin{verbatim}
-\usepackage[review]{acl}
-\end{verbatim}
-\end{quote}
-For the final version, omit the \verb|review| option:
-\begin{quote}
-\begin{verbatim}
-\usepackage{acl}
-\end{verbatim}
-\end{quote}
 
-To use Times Roman, put the following in the preamble:
-\begin{quote}
-\begin{verbatim}
-\usepackage{times}
-\end{verbatim}
-\end{quote}
-(Alternatives like txfonts or newtx are also acceptable.)
+\section{Related Literature}
 
-Please see the \LaTeX{} source of this document for comments on other packages that may be useful.
+The efficient adaptation of large language models (LLMs) has become increasingly important as models grow in size and computational requirements. Hu et al. (2021) introduced LoRA (Low-Rank Adaptation), a foundational method that significantly reduces the memory and computational costs of fine-tuning LLMs. LoRA works by freezing the pretrained model weights and injecting trainable rank decomposition matrices into each layer of the transformer architecture. This approach reduces the number of trainable parameters by several orders of magnitude while maintaining model quality comparable to full fine-tuning. The key insight of LoRA is that the changes in weights during model adaptation have a low "intrinsic rank," allowing for effective parameter-efficient fine-tuning.
+Building on Hu et al.’s prior work, He et al. (2021) provided a unified framework for parameter-efficient tuning methods. Through analysis of adapters, prefix tuning, and LoRA, they showed these methods still lagged behind full fine-tuning on challenging tasks like summarization and machine translation. By demonstrating that prefix tuning could be reformulated as a form of adapter, they identified key design dimensions across methods. Their experiments on diverse benchmarks led to the Mix-and-Match (MAM) Adapter, which matched full fine-tuning performance while using only 6.7\% of trainable parameters on generation tasks and 0.5\% on classification tasks.
+Further advancements on the low rank adaptation methodology were made by Dettmers et al. (2023), advancing the field further last year with QLoRA, which combines quantization with LoRA to achieve even greater memory efficiency. QLoRA introduces several innovations, including 4-bit NormalFloat quantization (optimized for normally distributed weights), double quantization (which quantizes the quantization constants), and paged optimizers to manage memory spikes. This combination enables the fine-tuning of large models (up to 65B parameters) on a single GPU while maintaining performance comparable to full 16-bit fine-tuning. 
+This year, Liu et al. (2024) proposed DoRA (Weight-Decomposed Low-Rank Adaptation), which introduces a weight decomposition analysis to investigate the inherent differences between full fine-tuning and LoRA. DoRA decomposes pretrained weights into magnitude and directional components, using LoRA specifically for directional updates. This decomposition approach enhances both learning capacity and training stability compared to standard LoRA, while maintaining the advantage of no additional inference overhead. Their analysis revealed that DoRA exhibits learning patterns more similar to full fine-tuning than LoRA does, leading to improved performance across various tasks and model architectures.
 
-Set the title and author using \verb|\title| and \verb|\author|. Within the author list, format multiple authors using \verb|\and| and \verb|\And| and \verb|\AND|; please see the \LaTeX{} source for examples.
 
-By default, the box containing the title and author names is set to the minimum of 5 cm. If you need more space, include the following in the preamble:
-\begin{quote}
-\begin{verbatim}
-\setlength\titlebox{<dim>}
-\end{verbatim}
-\end{quote}
-where \verb|<dim>| is replaced with a length. Do not set this length smaller than 5 cm.
+\section{Preliminary Implementation}
 
-\section{Document Body}
+We reimplement the LoRA paper and test on GPT 2 - Medium for robustness in our solution. The repository for our implementation can be found here: mturvillehei/cs769-project: Team ID - 7.
+LoRA layers are applied to the query and value matrices of attention heads, as discussed in LoRA for LLMs (Hu et al., 2021). This choice appears to be made due in order to limit the experiment from becoming too costly. This sentiment may be corroborated by the QLoRA paper (Dettmers et al., 2023), which states that to get full fine-tuning level performance, they needed to apply LoRA layers to the linear layers of the network as well. When tracking the memory cost of loss.backward() and optimizer.step() on GPT-2, we found that GPU memory was considerably reduced by using LoRA layers, about 70\% of the memory used on full fine-tuning. We experimented on the same dataset used in the paper, the E2E-NLG dataset (Novikova et al., 2017). With less compute, we could not use as robust of hyperparameters for training, so we opt to train our own baseline full fine-tuned GPT 2 - Medium to compare against.
 
-\subsection{Footnotes}
+LoRA layers caused a slight performance dip, but learning was still considerable across both models. Our learnable parameter reduction is on par with the original implementation as well, with a nearly 1000x smaller learnable space. Each query and value matrix is computed using a parameter space of 1024x1024. With LoRA layers using rank = 4, we can tune these matrices using 1024x4 + 4x1024 = 8192 parameters vs the original 1M. With 24 attention blocks in GPT 2, and 16384 LoRA parameters inside of an attention block, we arrive at the above number of around 390K parameters. Because GPT-2 has a unified attention layer that computes K,V,Q in one dense Conv1D layer, we need to inject LoRA into thi, break up it’s output, and add our LoRA output to the corresponding chunks before concatenating the unified K,V,Q matrix back together and passing it forward.
 
-Footnotes are inserted with the \verb|\footnote| command.\footnote{This is a footnote.}
 
-\subsection{Tables and figures}
+\section{Potential Work}
 
-See Table~\ref{tab:accents} for an example of a table and its caption.
-\textbf{Do not override the default caption sizes.}
+Building on the existing fine-tuning approaches of LoRA and QLoRA, we propose several methodological extensions specifically tailored for semantic evaluation tasks. Our proposed methods focus on addressing three key challenges: context preservation, memory efficiency, and adaption to multi-label classification scenarios. In order to extend our work beyond the existing LoRA and QLoRA work, we will be using LoRA and QLoRA training methods for the classification tasks required by SEMEVAL. 
 
-\begin{table}
-  \centering
-  \begin{tabular}{lc}
-    \hline
-    \textbf{Command} & \textbf{Output} \\
-    \hline
-    \verb|{\"a}|     & {\"a}           \\
-    \verb|{\^e}|     & {\^e}           \\
-    \verb|{\`i}|     & {\`i}           \\
-    \verb|{\.I}|     & {\.I}           \\
-    \verb|{\o}|      & {\o}            \\
-    \verb|{\'u}|     & {\'u}           \\
-    \verb|{\aa}|     & {\aa}           \\\hline
-  \end{tabular}
-  \begin{tabular}{lc}
-    \hline
-    \textbf{Command} & \textbf{Output} \\
-    \hline
-    \verb|{\c c}|    & {\c c}          \\
-    \verb|{\u g}|    & {\u g}          \\
-    \verb|{\l}|      & {\l}            \\
-    \verb|{\~n}|     & {\~n}           \\
-    \verb|{\H o}|    & {\H o}          \\
-    \verb|{\v r}|    & {\v r}          \\
-    \verb|{\ss}|     & {\ss}           \\
-    \hline
-  \end{tabular}
-  \caption{Example commands for accented characters, to be used in, \emph{e.g.}, Bib\TeX{} entries.}
-  \label{tab:accents}
-\end{table}
+In order to vary our research methods beyond the existing LoRA and QLoRA work, we will experiment with how we apply LoRA to the attention matrices and the linear layers. Some examples of variations are applying LoRA updates only to the key and value matrices, only applying to attention heads (rather than the linear layer as well), and more. We will also experiment with the floating point values that we settle on, and the learning rates compared to the original paper. 
 
-As much as possible, fonts in figures should conform
-to the document fonts. See Figure~\ref{fig:experiments} for an example of a figure and its caption.
+Another potential method we can explore is the implementation of a hierarchical extension to the LoRA architecture that specifically targets semantic classification tasks. In particular, instead of applying rank decomposition uniformly across all transformer layers, we introduce a layer-specific ranking scheme where:
+\begin{enumerate}
+	\item Lower layers maintain higher rank matrices to capture fundamental semantic features
+	\item Middle layers utilize dynamic rank allocation based on attention patterns
+	\item Upper layers employ lower rank decomposition to focus on task-specific classification
+\end{enumerate}
 
-Using the \verb|graphicx| package graphics files can be included within figure
-environment at an appropriate point within the text.
-The \verb|graphicx| package supports various optional arguments to control the
-appearance of the figure.
-You must include it explicitly in the \LaTeX{} preamble (after the
-\verb|\documentclass| declaration and before \verb|\begin{document}|) using
-\verb|\usepackage{graphicx}|.
+This hierarchical approach can potentially capture semantic information, and remain within the high-efficiency regime of LoRA training.
 
-\begin{figure}[t]
-  \includegraphics[width=\columnwidth]{example-image-golden}
-  \caption{A figure with a caption that runs for more than one line.
-    Example image is usually available through the \texttt{mwe} package
-    without even mentioning it in the preamble.}
-  \label{fig:experiments}
-\end{figure}
 
-\begin{figure*}[t]
-  \includegraphics[width=0.48\linewidth]{example-image-a} \hfill
-  \includegraphics[width=0.48\linewidth]{example-image-b}
-  \caption {A minimal working example to demonstrate how to place
-    two images side-by-side.}
-\end{figure*}
+\section{Experiment Details}
 
-\subsection{Hyperlinks}
+At the top level, we will be exploring the comparisons between different efficient fine-tuning methods (primarily LoRA and QLoRA), different models (LLaMa, GPT2, etc.), and the two metrics for the classification tasks (F1-macro and F1-micro). In particular, this will require a standardized test of the training parameters during fine-tuning between models, a comparison of the different metrics that we will be comparing, and a quantitative analysis of how each model performs on the dataset for predicting propagandistic techniques.
+Initially, this will require implementation of both the LoRA and QLoRA methods for the chosen task, and involves the development of the classifier. Once we have developed the codebase for the LoRA and QLoRA fine-tuning, we will begin optimizing the experimental parameters. In particular, we will be running hyperparameter optimization to identify the best settings for each model. This will require repeated fine-tuning attempts on our home machines, and we will show these results in the final report.
+For our experimental setup, we will utilize the SEMEVAL 2021 Task 6 dataset, which contains approximately 950 memes annotated with 20 different propaganda techniques. We will split this dataset into standard 80-10-10 training, validation, and test sets while maintaining class distribution. Given the inherent class imbalance in propaganda techniques, we will implement weighted sampling during training to ensure adequate representation of less common techniques. Our training process will involve systematic evaluation of key hyperparameters including learning rate (ranging from 1e-5 to 1e-3), LoRA rank (4, 8, 16, 32), and alpha scaling factors (4, 8, 16, 32).
+To ensure reproducibility and fair comparison between models, we will standardize our training environment across all experiments. This includes fixing the random seeds, utilizing the same batch size where possible (adjusted based on VRAM constraints), and maintaining consistent evaluation intervals. For each model configuration, we will conduct three training runs with different random seeds to account for training variance. Our evaluation metrics will focus primarily on F1-macro and F1-micro scores, but we will also track training time, memory usage, and convergence rates to provide a comprehensive analysis of the efficiency-performance trade-off.
 
-Users of older versions of \LaTeX{} may encounter the following error during compilation:
-\begin{quote}
-\verb|\pdfendlink| ended up in different nesting level than \verb|\pdfstartlink|.
-\end{quote}
-This happens when pdf\LaTeX{} is used and a citation splits across a page boundary. The best way to fix this is to upgrade \LaTeX{} to 2018-12-01 or later.
 
-\subsection{Citations}
+\section{Logistics and Planning}
 
-\begin{table*}
-  \centering
-  \begin{tabular}{lll}
-    \hline
-    \textbf{Output}           & \textbf{natbib command} & \textbf{ACL only command} \\
-    \hline
-    \citep{Gusfield:97}       & \verb|\citep|           &                           \\
-    \citealp{Gusfield:97}     & \verb|\citealp|         &                           \\
-    \citet{Gusfield:97}       & \verb|\citet|           &                           \\
-    \citeyearpar{Gusfield:97} & \verb|\citeyearpar|     &                           \\
-    \citeposs{Gusfield:97}    &                         & \verb|\citeposs|          \\
-    \hline
-  \end{tabular}
-  \caption{\label{citation-guide}
-    Citation commands supported by the style file.
-    The style is based on the natbib package and supports all natbib citation commands.
-    It also supports commands defined in previous ACL style files for compatibility.
-  }
-\end{table*}
+Caleb has implemented the LoRA code for this submission (Homework 3), specifically for the fine-tuning of GPT2-Medium on the original data from Hu et al. (2021). Moving forward, each of us will be responsible for fine-tuning of individual models on our home computers. In particular, this will be dependent on the availability of VRAM for each of us. Caleb has access to the largest amount of VRAM, and will handle training the larger models. Nick and Morgan will work on the slightly smaller mid-sized models.
+For the development of the code for hyperparameter optimization, as well as the code base for actually running the fine-tuning and evaluation of the model, this will be collaborative, and we will be working on this jointly.
+Our timeline will be structured in three main phases. In Phase 1 (weeks 1-2), we will focus on implementing and validating the QLoRA methodology, with Caleb leading the implementation while Nick and Morgan develop the evaluation framework and metrics tracking system. Phase 2 (weeks 3-4) will involve parallel training runs across our distributed hardware, with each team member responsible for specific model configurations. We will maintain a shared results repository and conduct weekly sync meetings to discuss progress and challenges. The final phase (weeks 5-6) will be dedicated to comprehensive analysis and report writing. This will be a collaborative effort as well.
 
-Table~\ref{citation-guide} shows the syntax supported by the style files.
-We encourage you to use the natbib styles.
-You can use the command \verb|\citet| (cite in text) to get ``author (year)'' citations, like this citation to a paper by \citet{Gusfield:97}.
-You can use the command \verb|\citep| (cite in parentheses) to get ``(author, year)'' citations \citep{Gusfield:97}.
-You can use the command \verb|\citealp| (alternative cite without parentheses) to get ``author, year'' citations, which is useful for using citations within parentheses (e.g. \citealp{Gusfield:97}).
+\cite{dettmers2023qlora}
+\cite{he2022unified}
+\cite{hu2021lora}
+\cite{li2024instruction}
+\cite{liu2024dora}
+\cite{novikova2017e2e}
 
-A possessive citation can be made with the command \verb|\citeposs|.
-This is not a standard natbib command, so it is generally not compatible
-with other style files.
-
-\subsection{References}
-
-\nocite{Ando2005,andrew2007scalable,rasooli-tetrault-2015}
-
-The \LaTeX{} and Bib\TeX{} style files provided roughly follow the American Psychological Association format.
-If your own bib file is named \texttt{custom.bib}, then placing the following before any appendices in your \LaTeX{} file will generate the references section for you:
-\begin{quote}
-\begin{verbatim}
-\bibliography{custom}
-\end{verbatim}
-\end{quote}
-
-You can obtain the complete ACL Anthology as a Bib\TeX{} file from \url{https://aclweb.org/anthology/anthology.bib.gz}.
-To include both the Anthology and your own .bib file, use the following instead of the above.
-\begin{quote}
-\begin{verbatim}
-\bibliography{anthology,custom}
-\end{verbatim}
-\end{quote}
-
-Please see Section~\ref{sec:bibtex} for information on preparing Bib\TeX{} files.
-
-\subsection{Equations}
-
-An example equation is shown below:
-\begin{equation}
-  \label{eq:example}
-  A = \pi r^2
-\end{equation}
-
-Labels for equation numbers, sections, subsections, figures and tables
-are all defined with the \verb|\label{label}| command and cross references
-to them are made with the \verb|\ref{label}| command.
-
-This an example cross-reference to Equation~\ref{eq:example}.
-
-\subsection{Appendices}
-
-Use \verb|\appendix| before any appendix section to switch the section numbering over to letters. See Appendix~\ref{sec:appendix} for an example.
-
-\section{Bib\TeX{} Files}
-\label{sec:bibtex}
-
-Unicode cannot be used in Bib\TeX{} entries, and some ways of typing special characters can disrupt Bib\TeX's alphabetization. The recommended way of typing special characters is shown in Table~\ref{tab:accents}.
-
-Please ensure that Bib\TeX{} records contain DOIs or URLs when possible, and for all the ACL materials that you reference.
-Use the \verb|doi| field for DOIs and the \verb|url| field for URLs.
-If a Bib\TeX{} entry has a URL or DOI field, the paper title in the references section will appear as a hyperlink to the paper, using the hyperref \LaTeX{} package.
-
-\section*{Acknowledgments}
-
-This document has been adapted
-by Steven Bethard, Ryan Cotterell and Rui Yan
-from the instructions for earlier ACL and NAACL proceedings, including those for
-ACL 2019 by Douwe Kiela and Ivan Vuli\'{c},
-NAACL 2019 by Stephanie Lukin and Alla Roskovskaya,
-ACL 2018 by Shay Cohen, Kevin Gimpel, and Wei Lu,
-NAACL 2018 by Margaret Mitchell and Stephanie Lukin,
-Bib\TeX{} suggestions for (NA)ACL 2017/2018 from Jason Eisner,
-ACL 2017 by Dan Gildea and Min-Yen Kan,
-NAACL 2017 by Margaret Mitchell,
-ACL 2012 by Maggie Li and Michael White,
-ACL 2010 by Jing-Shin Chang and Philipp Koehn,
-ACL 2008 by Johanna D. Moore, Simone Teufel, James Allan, and Sadaoki Furui,
-ACL 2005 by Hwee Tou Ng and Kemal Oflazer,
-ACL 2002 by Eugene Charniak and Dekang Lin,
-and earlier ACL and EACL formats written by several people, including
-John Chen, Henry S. Thompson and Donald Walker.
-Additional elements were taken from the formatting instructions of the \emph{International Joint Conference on Artificial Intelligence} and the \emph{Conference on Computer Vision and Pattern Recognition}.
-
-% Bibliography entries for the entire Anthology, followed by custom entries
-%\bibliography{anthology,custom}
-% Custom bibliography entries only
-\bibliography{custom}
-
-\appendix
-
-\section{Example Appendix}
-\label{sec:appendix}
-
-This is an appendix.
+\bibliographystyle{acl_natbib}
+\bibliography{references}
 
 \end{document}
