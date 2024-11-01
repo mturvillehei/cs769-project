@@ -1,51 +1,45 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from transformers.models.gpt2.modeling_gpt2 import GPT2SdpaAttention, GPT2FlashAttention2
+import torch.nn.functional as F
 
 class LoRA(nn.Module):
 
-    def __init__(self, feat_in, feat_out, rank=8, alpha=16):
+    def __init__(self, feat_in, feat_out, rank=8, alpha=32):
         super().__init__()
         self.scale = torch.tensor((alpha/rank), dtype=torch.bfloat16)
-        self.A_mat = nn.Parameter(torch.empty((feat_in,rank), dtype=torch.bfloat16))
-        self.B_mat = nn.Parameter(torch.zeros((rank, feat_out), dtype=torch.bfloat16))
-        nn.init.kaiming_uniform_(self.A_mat, a=np.sqrt(5))
+        self.A_mat = nn.Linear(feat_in, rank, bias=False)
+        self.B_mat = nn.Linear(rank, feat_out, bias=False)
+        nn.init.kaiming_uniform_(self.A_mat.weight, a=np.sqrt(5))
+        nn.init.zeros_(self.B_mat.weight)
 
     def forward(self, x):
-        return torch.mul(torch.matmul(x,torch.matmul(self.A_mat,self.B_mat)), self.scale)
+        return self.B_mat(self.A_mat(x)*self.scale)
 
 
 
 class LoRAAttentionLayer(nn.Module):
-    def __init__(self, attn_layer:nn.Module, rank=8, alpha=16, trainable=False):
+    def __init__(self, config):
         super().__init__()
-        self.base = attn_layer
-        self.feat_in = self.feat_out = attn_layer.nx
-        for param in self.base.parameters():
-            param.requires_grad = trainable
+        self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd)
+        # output embedding
+        self.c_proj = nn.Linear(config.n_embd, config.n_embd)
 
-        self.loraQ = LoRA(self.feat_in, self.feat_out, rank=rank, alpha=alpha)
-        self.loraV = LoRA(self.feat_in, self.feat_out, rank=rank, alpha=alpha)
+        self.loraQ = LoRA(config.n_embd, config.n_embd, rank=config.lora_r, alpha=config.lora_a)
+        self.loraV = LoRA(config.n_embd, config.n_embd, rank=config.lora_r, alpha=config.lora_a)
+        self.n_head = config.n_head
+        self.n_embd = config.n_embd
 
 
     def forward(self,x):
-        qkv = self.base(x)
-        qkv = qkv.chunk(3, dim=-1)
-        return torch.cat([qkv[0]+self.loraQ(x), qkv[1], qkv[2] + self.loraV(x)],dim=-1)
-
-
-def add_lora_attention_layers(model, target_modules='c_attn', rank=8, alpha=16):
-    to_change = []
-    for name, module in model.named_modules():
-       if type(module) is GPT2SdpaAttention or type(module) is GPT2FlashAttention2:
-           to_change.append((name,module))
-    for i in to_change:
-        i[1].set_submodule(target_modules, LoRAAttentionLayer(i[1].c_attn, rank=rank, alpha=alpha))
-    for n,p in model.named_parameters():
-        if 'lora' in n:
-            p.requires_grad = True
-        else:
-            p.requires_grad = False
-
-    return model
+        B, T, C = x.size()
+        qkv = self.c_attn(x)
+        q, k, v = qkv.split(self.n_embd, dim=2)
+        q = q + self.loraQ(q)
+        v = v + self.loraV(v)
+        k = k.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
+        q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
+        v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
+        y = F.scaled_dot_product_attention(q, k, v, is_causal=True)  # flash attention
+        y = y.transpose(1, 2).contiguous().view(B, T, C)  # re-assemble all head outputs side by side
+        return self.c_proj(y)
