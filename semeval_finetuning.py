@@ -61,7 +61,6 @@ class SEMEVALDataset(Dataset):
             'attention_mask': encoding['attention_mask'].squeeze(),
             'labels': label_tensor
         }
-    
 def train(args):
     print("Setting up training...")
     # Configure quantization
@@ -83,19 +82,32 @@ def train(args):
         device_map="auto"
     )
 
-    # Configure LoRA
-    print("Configuring LoRA...")
-    lora_config = LoraConfig(
-        r=args.rank,
-        lora_alpha=args.alpha,
-        target_modules=["q_proj", "v_proj"],
-        lora_dropout=args.dropout,
-        bias="none",
-        task_type="CAUSAL_LM"
-    )
+    # Configure LoRA or QLoRA
+    print(f"Configuring {args.lora_type}...")
+    if args.lora_type == "lora":
+        lora_config = LoraConfig(
+            r=args.rank,
+            lora_alpha=args.alpha,
+            target_modules=["q_proj", "v_proj"],
+            lora_dropout=args.dropout,
+            bias="none",
+            task_type="CAUSAL_LM"
+        )
+    elif args.lora_type == "qlora":
+        lora_config = LoraConfig(
+            r=args.rank,
+            lora_alpha=args.alpha,
+            target_modules=["q_proj", "v_proj", "fc1", "fc2"],
+            lora_dropout=args.dropout,
+            bias="none",
+            task_type="CAUSAL_LM"
+        )
+    else:
+        raise ValueError(f"Invalid LoRA type: {args.lora_type}")
 
     model = get_peft_model(model, lora_config)
     
+        
     # Create training dataset
     print("Loading SEMEVAL dataset...")
     train_dataset = SEMEVALDataset(
@@ -167,6 +179,7 @@ def main():
     parser = argparse.ArgumentParser(description="SEMEVAL Fine-tuning")
     parser.add_argument("--model-name", default="meta-llama/Llama-2-7b-hf")
     parser.add_argument("--data-dir", required=True, help="Path to SEMEVAL dataset directory")
+    parser.add_argument("--lora-type", default="lora", choices=["lora", "qlora"], help="Type of LoRA to use (lora or qlora)")
     parser.add_argument("--rank", type=int, default=8)
     parser.add_argument("--alpha", type=float, default=32)
     parser.add_argument("--dropout", type=float, default=0.05)

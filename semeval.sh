@@ -1,1 +1,1 @@
-python semeval_finetuning.py --model-name meta-llama/Llama-2-7b-hf --data-dir ./data/SEMEVAL-2021-task6-corpus/data --batch-size 8 --epochs 3 --task 1
+python semeval_finetuning.py --model-name meta-llama/Llama-2-7b-hf --data-dir ./data/SEMEVAL-2021-task6-corpus/data --batch-size 8 --epochs 3 --task 1 --lora-type qlora
