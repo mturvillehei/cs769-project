@@ -1,5 +1,6 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from transformers.tokenization_utils_base import AddedToken
 from peft import LoraConfig, get_peft_model
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
@@ -9,8 +10,10 @@ import os
 from datetime import datetime
 import json
 
+import torch.nn.functional as F
+
 class SEMEVALDataset(Dataset):
-    def __init__(self, data_path, tokenizer, max_length=512, task=1):
+    def __init__(self, data_path, tokenizer, max_length=512, task=1, split='train'):
         # Load the SEMEVAL data based on task
         if task == 1:
             with open(os.path.join(data_path, 'training_set_task1.txt'), 'r', encoding='utf-8') as f:
@@ -21,46 +24,92 @@ class SEMEVALDataset(Dataset):
         else:
             raise ValueError(f"Unsupported task: {task}")
         
-        self.techniques = list(set(technique for item in self.data for technique in item['labels']))
-        self.technique_to_index = {technique: index for index, technique in enumerate(self.techniques)}
-        self.num_techniques = len(self.techniques)
+        # Add special tokens like in E2E code
+        tokenizer.SPECIAL_TOKENS_ATTRIBUTES.append('text_tag')
+        tokenizer.SPECIAL_TOKENS_ATTRIBUTES.append('tech_tag')
+        tokenizer.add_special_tokens({
+            'text_tag': AddedToken("<text>:", special=True),
+            'tech_tag': AddedToken("<tech>:", special=True)
+        })
+        tokenizer._text_tag = '<text>:'  
+        tokenizer._tech_tag = '<tech>:'
+        tokenizer.pad_token = tokenizer.eos_token
 
-        # Process the data into text and labels
-        self.texts = []
-        self.labels = []
-        for item in self.data:
-            self.texts.append(item['text'])
-            self.labels.append(item['labels'])
-        
         self.tokenizer = tokenizer
         self.max_length = max_length
-
+        self.split = split
+        
+        self.samples = []
+        for item in self.data:
+            formatted_text = f"<text>: {item['text']} <tech>: {' , '.join(item['labels'])}"
+            encoded = tokenizer(
+                formatted_text,
+                truncation=True,
+                max_length=max_length,
+                padding='max_length'
+            )
+            self.samples.append({
+                'input_ids': encoded['input_ids'],
+                'attention_mask': encoded['attention_mask'],
+                'human_reference': item['labels']  # Keep original labels for evaluation
+            })
+    
     def __len__(self):
-        return len(self.texts)
+        return len(self.samples)
     
     def __getitem__(self, idx):
-        text = self.texts[idx]
-        label = self.labels[idx]
+        sample = self.samples[idx]
         
-        # Create a fixed-size label tensor
-        label_tensor = torch.zeros(self.num_techniques, dtype=torch.float)
-        for technique in label:
-            index = self.technique_to_index[technique]
-            label_tensor[index] = 1.0
+        if self.split == "validation" or self.split == "test":
+            return {
+                "input_ids": torch.tensor(sample['input_ids']).squeeze(),
+                "attention_mask": torch.tensor(sample['attention_mask']).squeeze(),
+                "labels": sample['human_reference']
+            }
         
-        encoding = self.tokenizer(
-            text,
-            truncation=True,
-            padding='max_length',
-            max_length=self.max_length,
-            return_tensors='pt'
-        )
-        
+        # For training, return the full sequence as both input and target
         return {
-            'input_ids': encoding['input_ids'].squeeze(),
-            'attention_mask': encoding['attention_mask'].squeeze(),
-            'labels': label_tensor
+            'input_ids': torch.tensor(sample['input_ids']).squeeze(),
+            'attention_mask': torch.tensor(sample['attention_mask']).squeeze(),
+            'labels': torch.tensor(sample['input_ids']).squeeze()  # Same as input for causal LM
         }
+
+def generate_text(model, tokenizer, text, num_tokens=100):
+    # Format input like training data
+    input_text = f"<text>: {text} <tech>:"
+    tokens = tokenizer(input_text, return_tensors='pt')['input_ids'].to(model.device)
+    
+    # Get stop tokens
+    stop_tokens = {
+        tokenizer.eos_token_id,
+        tokenizer.pad_token_id,
+        tokenizer.convert_tokens_to_ids('.')
+    }
+    
+    with torch.no_grad():
+        # Using top-k sampling like in E2E code
+        for _ in range(num_tokens):
+            logits = model(tokens)[0]
+            logits = logits[:, -1, :]
+            probs = F.softmax(logits, dim=-1)
+            top50probs, top50indices = torch.topk(probs, 50, dim=-1)
+            ix = torch.multinomial(top50probs, 1)
+            next_token = torch.gather(top50indices, -1, ix)
+            tokens = torch.cat((tokens, next_token), dim=1)
+            
+            # Stop if we generate any stop token
+            if next_token.item() in stop_tokens:
+                break
+    
+    # Decode and extract techniques
+    generated = tokenizer.decode(tokens[0], skip_special_tokens=False)
+    try:
+        techniques = generated.split("<tech>:")[1].strip()
+        return techniques.split(" , ")
+    except IndexError:
+        print("Warning: Generated text did not contain <tech>: token")
+        return []
+
 def train(args):
     print("Setting up training...")
     # Configure quantization
@@ -114,14 +163,16 @@ def train(args):
         args.data_dir,
         tokenizer,
         max_length=args.max_length,
-        task=args.task
+        task=args.task,
+        split='train'
     )
-    
+
     val_dataset = SEMEVALDataset(
         args.data_dir,
         tokenizer,
         max_length=args.max_length,
-        task=args.task
+        task=args.task,
+        split='validation'
     )
     
     train_loader = DataLoader(
@@ -136,6 +187,10 @@ def train(args):
         shuffle=False
     )
 
+    model.config.pad_token_id = tokenizer.pad_token_id
+    model.config.bos_token_id = tokenizer.bos_token_id
+    model.config.eos_token_id = tokenizer.eos_token_id
+    
     # Training loop
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
     
@@ -144,10 +199,17 @@ def train(args):
         model.train()
         total_loss = 0
         
-        for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs}"):
+        for step, batch in enumerate(tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs}")):
             optimizer.zero_grad()
             
-            inputs = {k: v.to(model.device) for k, v in batch.items()}
+            # Move all tensors to the same device as the model
+            inputs = {
+                'input_ids': batch['input_ids'].to(model.device),
+                'attention_mask': batch['attention_mask'].to(model.device),
+                'labels': batch['labels'].to(model.device)
+            }
+            
+            # Forward pass - model will automatically calculate loss using labels
             outputs = model(**inputs)
             loss = outputs.loss
             
@@ -155,10 +217,22 @@ def train(args):
             optimizer.step()
             
             total_loss += loss.item()
+            
+            # Generate sample output every 100 steps
+            if step % 100 == 0:
+                # Get input text up to the <tech>: token
+                input_ids = batch['input_ids'][0]
+                tech_token_pos = (input_ids == tokenizer.convert_tokens_to_ids("<tech>:")).nonzero()[0]
+                input_text = tokenizer.decode(input_ids[:tech_token_pos], skip_special_tokens=True)
+                
+                print("\nSample generation:")
+                print("Input:", input_text)
+                print("Generated techniques:", generate_text(model, tokenizer, input_text))
+                print("Actual techniques:", tokenizer.decode(batch['labels'][0], skip_special_tokens=True))
+                print()
         
         avg_loss = total_loss / len(train_loader)
         print(f"Epoch {epoch+1} average loss: {avg_loss:.4f}")
-        
         # Save checkpoint
         checkpoint_path = f"semeval_checkpoint_epoch{epoch+1}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         model.save_pretrained(checkpoint_path)
