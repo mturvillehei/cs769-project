@@ -9,7 +9,7 @@ from tqdm import tqdm
 import os
 from datetime import datetime
 import json
-
+from huggingface_hub import login
 import torch.nn.functional as F
 
 class SEMEVALDataset(Dataset):
@@ -31,17 +31,20 @@ class SEMEVALDataset(Dataset):
             'text_tag': AddedToken("<text>:", special=True),
             'tech_tag': AddedToken("<tech>:", special=True)
         })
-        tokenizer._text_tag = '<text>:'  
+        tokenizer._text_tag = '<text>:'
         tokenizer._tech_tag = '<tech>:'
         tokenizer.pad_token = tokenizer.eos_token
 
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.split = split
-        
+
         self.samples = []
         for item in self.data:
-            formatted_text = f"<text>: {item['text']} <tech>: {' , '.join(item['labels'])}"
+            if split == 'train':
+                formatted_text = f"<text>: {item['text']} <tech>: {' , '.join(item['labels'])}"
+            else:
+                formatted_text = f"<text>: {item['text']} <tech>: "
             encoded = tokenizer(
                 formatted_text,
                 truncation=True,
@@ -53,13 +56,12 @@ class SEMEVALDataset(Dataset):
                 'attention_mask': encoded['attention_mask'],
                 'human_reference': item['labels']  # Keep original labels for evaluation
             })
-    
+
     def __len__(self):
         return len(self.samples)
     
     def __getitem__(self, idx):
         sample = self.samples[idx]
-        
         if self.split == "validation" or self.split == "test":
             return {
                 "input_ids": torch.tensor(sample['input_ids']).squeeze(),
@@ -78,14 +80,14 @@ def generate_text(model, tokenizer, text, num_tokens=100):
     # Format input like training data
     input_text = f"<text>: {text} <tech>:"
     tokens = tokenizer(input_text, return_tensors='pt')['input_ids'].to(model.device)
-    
+
     # Get stop tokens
     stop_tokens = {
         tokenizer.eos_token_id,
         tokenizer.pad_token_id,
         tokenizer.convert_tokens_to_ids('.')
     }
-    
+
     with torch.no_grad():
         # Using top-k sampling like in E2E code
         for _ in range(num_tokens):
@@ -96,11 +98,11 @@ def generate_text(model, tokenizer, text, num_tokens=100):
             ix = torch.multinomial(top50probs, 1)
             next_token = torch.gather(top50indices, -1, ix)
             tokens = torch.cat((tokens, next_token), dim=1)
-            
+
             # Stop if we generate any stop token
             if next_token.item() in stop_tokens:
                 break
-    
+
     # Decode and extract techniques
     generated = tokenizer.decode(tokens[0], skip_special_tokens=False)
     try:
@@ -128,7 +130,7 @@ def train(args):
     model = AutoModelForCausalLM.from_pretrained(
         args.model_name,
         quantization_config=nf4_config,
-        device_map="auto"
+        attn_implementation='flash_attention_2'
     )
 
     # Configure LoRA or QLoRA
@@ -190,7 +192,9 @@ def train(args):
     model.config.pad_token_id = tokenizer.pad_token_id
     model.config.bos_token_id = tokenizer.bos_token_id
     model.config.eos_token_id = tokenizer.eos_token_id
-    
+    model.resize_token_embeddings(len(tokenizer))
+    model.to('cuda')
+
     # Training loop
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
     
@@ -204,33 +208,33 @@ def train(args):
             
             # Move all tensors to the same device as the model
             inputs = {
-                'input_ids': batch['input_ids'].to(model.device),
-                'attention_mask': batch['attention_mask'].to(model.device),
-                'labels': batch['labels'].to(model.device)
+                'input_ids': batch['input_ids'].to('cuda'),
+                'attention_mask': batch['attention_mask'].to('cuda'),
+                'labels': batch['labels'].to('cuda')
             }
-            
+
             # Forward pass - model will automatically calculate loss using labels
-            outputs = model(**inputs)
+            outputs = model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'], labels=inputs['labels'])
             loss = outputs.loss
             
             loss.backward()
             optimizer.step()
             
             total_loss += loss.item()
-            
+
             # Generate sample output every 100 steps
             if step % 100 == 0:
                 # Get input text up to the <tech>: token
                 input_ids = batch['input_ids'][0]
                 tech_token_pos = (input_ids == tokenizer.convert_tokens_to_ids("<tech>:")).nonzero()[0]
-                input_text = tokenizer.decode(input_ids[:tech_token_pos], skip_special_tokens=True)
-                
+                input_text = tokenizer.decode(input_ids[:tech_token_pos+1], skip_special_tokens=True)
+
                 print("\nSample generation:")
                 print("Input:", input_text)
                 print("Generated techniques:", generate_text(model, tokenizer, input_text))
                 print("Actual techniques:", tokenizer.decode(batch['labels'][0], skip_special_tokens=True))
                 print()
-        
+
         avg_loss = total_loss / len(train_loader)
         print(f"Epoch {epoch+1} average loss: {avg_loss:.4f}")
         # Save checkpoint
@@ -240,6 +244,7 @@ def train(args):
         # Validation
         model.eval()
         val_loss = 0
+        '''
         with torch.no_grad():
             for batch in tqdm(val_loader, desc="Validation"):
                 inputs = {k: v.to(model.device) for k, v in batch.items()}
@@ -247,9 +252,13 @@ def train(args):
                 val_loss += outputs.loss.item()
         
         avg_val_loss = val_loss / len(val_loader)
-        print(f"Validation loss: {avg_val_loss:.4f}")
+        print(f"Validation loss: {avg_val_loss:.4f}"
+        '''
+        if(epoch % 5 == 0):
+            model.save_pretrained(f"semeval_finetuning")
 
 def main():
+    login(token='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')
     parser = argparse.ArgumentParser(description="SEMEVAL Fine-tuning")
     parser.add_argument("--model-name", default="meta-llama/Llama-2-7b-hf")
     parser.add_argument("--data-dir", required=True, help="Path to SEMEVAL dataset directory")
