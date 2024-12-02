@@ -258,7 +258,7 @@ def train(args):
             model.save_pretrained(f"semeval_finetuning")
 
 def main():
-    login(token='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')
+    login(token='')
     parser = argparse.ArgumentParser(description="SEMEVAL Fine-tuning")
     parser.add_argument("--model-name", default="meta-llama/Llama-2-7b-hf")
     parser.add_argument("--data-dir", required=True, help="Path to SEMEVAL dataset directory")
