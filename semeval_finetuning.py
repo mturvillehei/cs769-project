@@ -1,3 +1,5 @@
+import sys
+import objsize
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from transformers.tokenization_utils_base import AddedToken
@@ -130,7 +132,7 @@ def train(args):
     model = AutoModelForCausalLM.from_pretrained(
         args.model_name,
         quantization_config=nf4_config,
-        attn_implementation='flash_attention_2'
+        attn_implementation='flash_attention_2',
     )
 
     # Configure LoRA or QLoRA
@@ -156,8 +158,8 @@ def train(args):
     else:
         raise ValueError(f"Invalid LoRA type: {args.lora_type}")
 
+
     model = get_peft_model(model, lora_config)
-    
         
     # Create training dataset
     print("Loading SEMEVAL dataset...")
@@ -188,15 +190,21 @@ def train(args):
         batch_size=args.batch_size,
         shuffle=False
     )
-
     model.config.pad_token_id = tokenizer.pad_token_id
     model.config.bos_token_id = tokenizer.bos_token_id
     model.config.eos_token_id = tokenizer.eos_token_id
     model.resize_token_embeddings(len(tokenizer))
+
     model.to('cuda')
+    param_count = 0
+    for n, p in model.named_parameters():
+        if p.requires_grad:
+            param_count += p.numel()
+    print(f"Total params: {param_count}")
 
     # Training loop
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
+    mem_consumption = []
     
     print("Starting training...")
     for epoch in range(args.epochs):
@@ -216,12 +224,17 @@ def train(args):
             # Forward pass - model will automatically calculate loss using labels
             outputs = model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'], labels=inputs['labels'])
             loss = outputs.loss
-            
+            if torch.cuda.is_available():
+                torch.cuda.reset_peak_memory_stats()
             loss.backward()
             optimizer.step()
             
             total_loss += loss.item()
 
+            if torch.cuda.is_available():
+                gpu_max = torch.cuda.max_memory_allocated() / 1024 ** 3
+                print("Backward: " + str(gpu_max))
+                mem_consumption.append(gpu_max)
             # Generate sample output every 100 steps
             if step % 100 == 0:
                 # Get input text up to the <tech>: token
@@ -254,8 +267,6 @@ def train(args):
         avg_val_loss = val_loss / len(val_loader)
         print(f"Validation loss: {avg_val_loss:.4f}"
         '''
-        if(epoch % 5 == 0):
-            model.save_pretrained(f"semeval_finetuning")
 
 def main():
     login(token='')
