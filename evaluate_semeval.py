@@ -99,7 +99,7 @@ def generate_text(model, tokenizer, text, num_tokens=100):
     generated = tokenizer.decode(tokens[0], skip_special_tokens=False)
     try:
         techniques = generated.split("<tech>:")[1].strip()
-        return techniques.split(" , ")
+        return techniques.replace('</s>','').split(" , ")
     except IndexError:
         print("Warning: Generated text did not contain <tech>: token")
         return []
@@ -122,13 +122,25 @@ class ModelEvaluator:
 
         tokenizer = AutoTokenizer.from_pretrained(model_path)
         tokenizer.pad_token = tokenizer.eos_token
-        
+        tokenizer.SPECIAL_TOKENS_ATTRIBUTES.append('text_tag')
+        tokenizer.SPECIAL_TOKENS_ATTRIBUTES.append('tech_tag')
+        tokenizer.add_special_tokens({
+            'text_tag': AddedToken("<text>:", special=True),
+            'tech_tag': AddedToken("<tech>:", special=True)
+        })
+        tokenizer._text_tag = '<text>:'
+        tokenizer._tech_tag = '<tech>:'
+        tokenizer.pad_token = tokenizer.eos_token
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             quantization_config=nf4_config,
             attn_implementation='flash_attention_2',
             device_map="auto"
         )
+        model.config.pad_token_id = tokenizer.pad_token_id
+        model.config.bos_token_id = tokenizer.bos_token_id
+        model.config.eos_token_id = tokenizer.eos_token_id
+        model.resize_token_embeddings(len(tokenizer))
 
         if adapter_path:
             print(f"Loading adapter from {adapter_path}")

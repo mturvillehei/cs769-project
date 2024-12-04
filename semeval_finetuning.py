@@ -1,3 +1,5 @@
+import sys
+import objsize
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from transformers.tokenization_utils_base import AddedToken
@@ -114,36 +116,28 @@ def generate_text(model, tokenizer, text, num_tokens=100):
 
 def train(args):
     print("Setting up training...")
+    # Configure quantization
+    nf4_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_compute_dtype=torch.bfloat16
+    )
+
+    # Load model and tokenizer
+    print(f"Loading model {args.model_name}...")
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    tokenizer.pad_token = tokenizer.eos_token
     
-    # Configure model based on fine-tuning method
-    if args.fine_tuning_method == "fft":
-        # Full fine-tuning configuration
-        model = AutoModelForCausalLM.from_pretrained(
-            args.model_name,
-            device_map="auto"
-        )
-    elif args.fine_tuning_method in ["lora", "qlora"]:
-        # Configure quantization for QLoRA
-        if args.fine_tuning_method == "qlora":
-            nf4_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_quant_type="nf4",
-                bnb_4bit_use_double_quant=True,
-                bnb_4bit_compute_dtype=torch.bfloat16
-            )
-            model = AutoModelForCausalLM.from_pretrained(
-                args.model_name,
-                quantization_config=nf4_config,
-                attn_implementation='flash_attention_2'
-            )
-        else:
-            # Standard LoRA without quantization
-            model = AutoModelForCausalLM.from_pretrained(
-                args.model_name,
-                device_map="auto"
-            )
-        
-        # Configure LoRA
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_name,
+        quantization_config=nf4_config,
+        attn_implementation='flash_attention_2'
+    )
+
+    # Configure LoRA or QLoRA
+    print(f"Configuring {args.lora_type}...")
+    if args.lora_type == "lora":
         lora_config = LoraConfig(
             r=args.rank,
             lora_alpha=args.alpha,
@@ -152,7 +146,10 @@ def train(args):
             bias="none",
             task_type="CAUSAL_LM"
         )
-        model = get_peft_model(model, lora_config)
+    else:
+        raise ValueError(f"Invalid LoRA type: {args.lora_type}")
+
+    model = get_peft_model(model, lora_config)
     
         
     # Create training dataset
@@ -184,15 +181,21 @@ def train(args):
         batch_size=args.batch_size,
         shuffle=False
     )
-
     model.config.pad_token_id = tokenizer.pad_token_id
     model.config.bos_token_id = tokenizer.bos_token_id
     model.config.eos_token_id = tokenizer.eos_token_id
     model.resize_token_embeddings(len(tokenizer))
+
     model.to('cuda')
+    param_count = 0
+    for n, p in model.named_parameters():
+        if p.requires_grad:
+            param_count += p.numel()
+    print(f"Total params: {param_count}")
 
     # Training loop
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
+    mem_consumption = []
     
     print("Starting training...")
     for epoch in range(args.epochs):
@@ -212,12 +215,17 @@ def train(args):
             # Forward pass - model will automatically calculate loss using labels
             outputs = model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'], labels=inputs['labels'])
             loss = outputs.loss
-            
+            if torch.cuda.is_available():
+                torch.cuda.reset_peak_memory_stats()
             loss.backward()
             optimizer.step()
             
             total_loss += loss.item()
 
+            if torch.cuda.is_available():
+                gpu_max = torch.cuda.max_memory_allocated() / 1024 ** 3
+                print("Backward: " + str(gpu_max))
+                mem_consumption.append(gpu_max)
             # Generate sample output every 100 steps
             if step % 100 == 0:
                 # Get input text up to the <tech>: token
@@ -250,8 +258,6 @@ def train(args):
         avg_val_loss = val_loss / len(val_loader)
         print(f"Validation loss: {avg_val_loss:.4f}"
         '''
-        if(epoch % 5 == 0):
-            model.save_pretrained(f"semeval_finetuning")
 
 def main():
     login(token='')
