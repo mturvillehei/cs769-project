@@ -114,49 +114,45 @@ def generate_text(model, tokenizer, text, num_tokens=100):
 
 def train(args):
     print("Setting up training...")
-    # Configure quantization
-    nf4_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_use_double_quant=True,
-        bnb_4bit_compute_dtype=torch.bfloat16
-    )
-
-    # Load model and tokenizer
-    print(f"Loading model {args.model_name}...")
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-    tokenizer.pad_token = tokenizer.eos_token
     
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model_name,
-        quantization_config=nf4_config,
-        attn_implementation='flash_attention_2'
-    )
-
-    # Configure LoRA or QLoRA
-    print(f"Configuring {args.lora_type}...")
-    if args.lora_type == "lora":
+    # Configure model based on fine-tuning method
+    if args.fine_tuning_method == "fft":
+        # Full fine-tuning configuration
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_name,
+            device_map="auto"
+        )
+    elif args.fine_tuning_method in ["lora", "qlora"]:
+        # Configure quantization for QLoRA
+        if args.fine_tuning_method == "qlora":
+            nf4_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_compute_dtype=torch.bfloat16
+            )
+            model = AutoModelForCausalLM.from_pretrained(
+                args.model_name,
+                quantization_config=nf4_config,
+                attn_implementation='flash_attention_2'
+            )
+        else:
+            # Standard LoRA without quantization
+            model = AutoModelForCausalLM.from_pretrained(
+                args.model_name,
+                device_map="auto"
+            )
+        
+        # Configure LoRA
         lora_config = LoraConfig(
             r=args.rank,
             lora_alpha=args.alpha,
-            target_modules=["q_proj", "v_proj"],
+            target_modules=["q_proj", "v_proj"] if args.fine_tuning_method == "lora" else ["q_proj", "v_proj", "fc1", "fc2"],
             lora_dropout=args.dropout,
             bias="none",
             task_type="CAUSAL_LM"
         )
-    elif args.lora_type == "qlora":
-        lora_config = LoraConfig(
-            r=args.rank,
-            lora_alpha=args.alpha,
-            target_modules=["q_proj", "v_proj", "fc1", "fc2"],
-            lora_dropout=args.dropout,
-            bias="none",
-            task_type="CAUSAL_LM"
-        )
-    else:
-        raise ValueError(f"Invalid LoRA type: {args.lora_type}")
-
-    model = get_peft_model(model, lora_config)
+        model = get_peft_model(model, lora_config)
     
         
     # Create training dataset
@@ -262,14 +258,14 @@ def main():
     parser = argparse.ArgumentParser(description="SEMEVAL Fine-tuning")
     parser.add_argument("--model-name", default="meta-llama/Llama-2-7b-hf")
     parser.add_argument("--data-dir", required=True, help="Path to SEMEVAL dataset directory")
-    parser.add_argument("--lora-type", default="lora", choices=["lora", "qlora"], help="Type of LoRA to use (lora or qlora)")
+    parser.add_argument("--lora-type", default="lora", choices=["fft", "lora", "qlora"], help="Type of LoRA to use (full finetuning, lora, or qlora)")
     parser.add_argument("--rank", type=int, default=8)
     parser.add_argument("--alpha", type=float, default=32)
     parser.add_argument("--dropout", type=float, default=0.05)
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--epochs", type=int, default=3)
-    parser.add_argument("--max-length", type=int, default=512)
+    parser.add_argument("--max-length", type=int, default=512)  
     parser.add_argument("--task", type=int, default=1, choices=[1, 2], help="SEMEVAL subtask (1 or 2)")
     
     args = parser.parse_args()
