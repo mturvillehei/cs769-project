@@ -141,13 +141,30 @@ def train(args):
         lora_config = LoraConfig(
             r=args.rank,
             lora_alpha=args.alpha,
-            target_modules=["q_proj", "v_proj"] if args.fine_tuning_method == "lora" else ["q_proj", "v_proj", "fc1", "fc2"],
+            target_modules=["q_proj", "v_proj"],
             lora_dropout=args.dropout,
             bias="none",
             task_type="CAUSAL_LM"
         )
+    elif args.lora_type == "qlora":
+        lora_config = LoraConfig(
+            r=args.rank,
+            lora_alpha=args.alpha,
+            target_modules=["q_proj", "v_proj", "fc1", "fc2"],
+            lora_dropout=args.dropout,
+            bias="none",
+            task_type="CAUSAL_LM"
+        )
+    elif args.lora_type == "fft":
+        # For full fine-tuning, we don't need LoRA config
+        model.train()  # Enable all parameters for training
+        print("Using full fine-tuning")
+        return model
     else:
         raise ValueError(f"Invalid LoRA type: {args.lora_type}")
+
+    if args.lora_type in ["lora", "qlora"]:
+        model = get_peft_model(model, lora_config)
 
     model = get_peft_model(model, lora_config)
     
@@ -264,7 +281,8 @@ def main():
     parser = argparse.ArgumentParser(description="SEMEVAL Fine-tuning")
     parser.add_argument("--model-name", default="meta-llama/Llama-2-7b-hf")
     parser.add_argument("--data-dir", required=True, help="Path to SEMEVAL dataset directory")
-    parser.add_argument("--lora-type", default="lora", choices=["fft", "lora", "qlora"], help="Type of LoRA to use (full finetuning, lora, or qlora)")
+    parser.add_argument("--lora-type", default="lora", choices=["fft", "lora", "qlora"], 
+                    help="Training type: full fine-tuning (fft), LoRA, or QLoRA")    
     parser.add_argument("--rank", type=int, default=8)
     parser.add_argument("--alpha", type=float, default=32)
     parser.add_argument("--dropout", type=float, default=0.05)
