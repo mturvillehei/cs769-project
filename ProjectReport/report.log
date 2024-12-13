@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2024.10.28)  13 DEC 2024 00:46
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2024.10.28)  13 DEC 2024 01:01
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -522,9 +522,6 @@ File: qlora.png Graphic file (type png)
 Package pdftex.def Info: qlora.png  used on input line 93.
 (pdftex.def)             Requested size: 361.34999pt x 151.8677pt.
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
-
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
@@ -533,8 +530,12 @@ Underfull \hbox (badness 3525) in paragraph at lines 99--100
 []\T1/ptm/m/n/10.95 (+20) This year, Liu et al. (2024) pro-posed
  []
 
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
 LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 10
 4.
+
 (C:\Users\nbodd\AppData\Local\Programs\MiKTeX\tex/latex/inconsolata\t1zi4.fd
 File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
 )
@@ -584,6 +585,22 @@ Package pdftex.def Info: semeval_leaderboard.png  used on input line 175.
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
  [5 <./semeval_leaderboard.png>] (report.bbl
+Underfull \hbox (badness 1852) in paragraph at lines 6--11
+\T1/ptm/m/n/10 (+20) Kai-Chiang Wu, and Di-ana Mar-culescu. 2024.
+ []
+
+
+Underfull \hbox (badness 3838) in paragraph at lines 6--11
+[][]\T1/ptm/m/n/10 (+20) Quamba: A post-training quan-ti-za-tion recipe
+ []
+
+
+Underfull \hbox (badness 4518) in paragraph at lines 6--11
+\T1/ptm/m/n/10 (+20) for se-lec-tive state space mod-els[][].  \T1/ptm/m/it/10 
+(+20) Preprint\T1/ptm/m/n/10 (+20) ,
+ []
+
+
 Underfull \hbox (badness 4144) in paragraph at lines 44--49
 \T1/ptm/m/n/10 (+20) Cheng, and Min-Hung Chen. 2024.  [][]Dora:
  []
@@ -608,11 +625,11 @@ Package rerunfilecheck Info: File `report.out' has not changed.
 (rerunfilecheck)             Checksum: 718546C41BFE8CCD199F4E44332ECEF1;1200.
  ) 
 Here is how much of TeX's memory you used:
- 15874 strings out of 474485
- 252775 string characters out of 5743733
+ 15886 strings out of 474485
+ 252874 string characters out of 5743733
  1958542 words of memory out of 5000000
  37677 multiletter control sequences out of 15000+600000
- 607974 words of font info for 229 fonts, out of 8000000 for 9000
+ 608494 words of font info for 237 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  90i,10n,93p,1299b,1374s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/nbodd/AppData/Local/Programs/MiKTeX/fonts/type1/public/inconsolata/
@@ -621,7 +638,7 @@ public/amsfonts/cm/cmmi10.pfb><C:/Users/nbodd/AppData/Local/Programs/MiKTeX/fon
 ts/type1/urw/times/utmb8a.pfb><C:/Users/nbodd/AppData/Local/Programs/MiKTeX/fon
 ts/type1/urw/times/utmr8a.pfb><C:/Users/nbodd/AppData/Local/Programs/MiKTeX/fon
 ts/type1/urw/times/utmri8a.pfb>
-Output written on report.pdf (7 pages, 332002 bytes).
+Output written on report.pdf (7 pages, 331881 bytes).
 PDF statistics:
  208 PDF objects out of 1000 (max. 8388607)
  48 named destinations out of 1000 (max. 500000)

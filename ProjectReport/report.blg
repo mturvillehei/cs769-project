@@ -17,37 +17,37 @@ Reallocating 'wiz_functions' (item size: 4) to 6000 items.
 Database file #1: references.bib
 You've used 7 entries,
             3734 wiz_defined-function locations,
-            779 strings with 7514 characters,
-and the built_in function-call counts, 5460 in all, are:
-= -- 469
-> -- 281
-< -- 3
-+ -- 102
-- -- 94
-* -- 393
-:= -- 862
-add.period$ -- 31
+            778 strings with 7507 characters,
+and the built_in function-call counts, 5624 in all, are:
+= -- 477
+> -- 315
+< -- 2
++ -- 114
+- -- 106
+* -- 427
+:= -- 894
+add.period$ -- 30
 call.type$ -- 7
-change.case$ -- 73
+change.case$ -- 74
 chr.to.int$ -- 8
 cite$ -- 7
-duplicate$ -- 313
-empty$ -- 385
-format.name$ -- 112
-if$ -- 1181
+duplicate$ -- 309
+empty$ -- 381
+format.name$ -- 126
+if$ -- 1205
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 67
-newline$ -- 40
+missing$ -- 66
+newline$ -- 39
 num.names$ -- 28
 pop$ -- 162
 preamble$ -- 1
-purify$ -- 59
+purify$ -- 63
 quote$ -- 0
-skip$ -- 269
+skip$ -- 270
 stack$ -- 0
-substring$ -- 146
-swap$ -- 173
+substring$ -- 144
+swap$ -- 176
 text.length$ -- 3
 text.prefix$ -- 0
 top$ -- 0
@@ -55,5 +55,5 @@ type$ -- 63
 warning$ -- 0
 while$ -- 27
 width$ -- 0
-write$ -- 99
+write$ -- 98
 (There was 1 error message)

@@ -1,13 +1,13 @@
 \begin{thebibliography}{7}
 \providecommand{\natexlab}[1]{#1}
 
-\bibitem[{Anonymous(2024)}]{quamba}
-Anonymous. 2024.
-\newblock \href {https://openreview.net/forum?id=mnna9LUg7P} {Quamba: A
-  post-training quantization recipe for selective state space models}.
-\newblock In \emph{Submitted to The Thirteenth International Conference on
-  Learning Representations}.
-\newblock Under review.
+\bibitem[{Chiang et~al.(2024)Chiang, Chang, Frumkin, Wu, and
+  Marculescu}]{quamba}
+Hung-Yueh Chiang, Chi-Chih Chang, Natalia Frumkin, Kai-Chiang Wu, and Diana
+  Marculescu. 2024.
+\newblock \href {https://arxiv.org/abs/2410.13229} {Quamba: A post-training
+  quantization recipe for selective state space models}.
+\newblock \emph{Preprint}, arXiv:2410.13229.
 
 \bibitem[{Dettmers et~al.(2023)Dettmers, Pagnoni, Holtzman, and
   Zettlemoyer}]{dettmers2023qlora}
