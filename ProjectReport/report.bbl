@@ -1,0 +1,59 @@
+\begin{thebibliography}{7}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[{Anonymous(2024)}]{quamba}
+Anonymous. 2024.
+\newblock \href {https://openreview.net/forum?id=mnna9LUg7P} {Quamba: A
+  post-training quantization recipe for selective state space models}.
+\newblock In \emph{Submitted to The Thirteenth International Conference on
+  Learning Representations}.
+\newblock Under review.
+
+\bibitem[{Dettmers et~al.(2023)Dettmers, Pagnoni, Holtzman, and
+  Zettlemoyer}]{dettmers2023qlora}
+Tim Dettmers, Artidoro Pagnoni, Ari Holtzman, and Luke Zettlemoyer. 2023.
+\newblock \href {https://arxiv.org/abs/2305.14314} {Qlora: Efficient finetuning
+  of quantized llms}.
+\newblock \emph{Preprint}, arXiv:2305.14314.
+
+\bibitem[{He et~al.(2022)He, Zhou, Ma, Berg-Kirkpatrick, and
+  Neubig}]{he2022unified}
+Junxian He, Chunting Zhou, Xuezhe Ma, Taylor Berg-Kirkpatrick, and Graham
+  Neubig. 2022.
+\newblock \href {https://arxiv.org/abs/2110.04366} {Towards a unified view of
+  parameter-efficient transfer learning}.
+\newblock \emph{Preprint}, arXiv:2110.04366.
+
+\bibitem[{Hu et~al.(2021)Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and
+  Chen}]{hu2021lora}
+Edward~J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean
+  Wang, Lu~Wang, and Weizhu Chen. 2021.
+\newblock \href {https://arxiv.org/abs/2106.09685} {Lora: Low-rank adaptation
+  of large language models}.
+\newblock \emph{Preprint}, arXiv:2106.09685.
+
+\bibitem[{Li et~al.(2024)Li, Pang, and Zhao}]{li2024instruction}
+Zou Li, Ning Pang, and Xiang Zhao. 2024.
+\newblock Instruction tuning large language models for multimodal relation
+  extraction using lora.
+\newblock In \emph{Web Information Systems and Applications}, pages 364--376,
+  Singapore. Springer Nature Singapore.
+
+\bibitem[{Liu et~al.(2024)Liu, Wang, Yin, Molchanov, Wang, Cheng, and
+  Chen}]{liu2024dora}
+Shih-Yang Liu, Chien-Yi Wang, Hongxu Yin, Pavlo Molchanov, Yu-Chiang~Frank
+  Wang, Kwang-Ting Cheng, and Min-Hung Chen. 2024.
+\newblock \href {https://arxiv.org/abs/2402.09353} {Dora: Weight-decomposed
+  low-rank adaptation}.
+\newblock \emph{Preprint}, arXiv:2402.09353.
+
+\bibitem[{Novikova et~al.(2017)Novikova, Du{\v{s}}ek, and
+  Rieser}]{novikova2017e2e}
+Jekaterina Novikova, Ond{\v{r}}ej Du{\v{s}}ek, and Verena Rieser. 2017.
+\newblock \href {https://doi.org/10.18653/v1/W17-5525} {The {E}2{E} dataset:
+  New challenges for end-to-end generation}.
+\newblock In \emph{Proceedings of the 18th Annual {SIG}dial Meeting on
+  Discourse and Dialogue}, pages 201--206, Saarbr{\"u}cken, Germany.
+  Association for Computational Linguistics.
+
+\end{thebibliography}
