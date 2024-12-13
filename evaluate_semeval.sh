@@ -1,1 +1,4 @@
-python evaluate_semeval.py --model-name ./semeval_finetuning  --data-dir ./data/SEMEVAL-2021-task6-corpus/data --task 1  --adapter-path ./semeval_finetuning/adapter_config.json --max-length 256
+python evaluate_semeval.py --model-name meta-llama/Llama-3.2-1B  --data-dir ./data/SEMEVAL-2021-task6-corpus/data --task 1  --adapter-path ./semeval_qlora_Llama-3.2-1B --max-length 128 --tokenizer meta-llama/Llama-3.2-1B
+python evaluate_semeval.py --model-name meta-llama/Llama-3.2-1B  --data-dir ./data/SEMEVAL-2021-task6-corpus/data --task 1  --adapter-path ./semeval_lora_Llama-3.2-1B --max-length 128 --tokenizer meta-llama/Llama-3.2-1B
+python evaluate_semeval.py --model-name ./semeval_fft_Llama-3.2-1B  --data-dir ./data/SEMEVAL-2021-task6-corpus/data --task 1  --max-length 128 --tokenizer meta-llama/Llama-3.2-1B
+python evaluate_semeval.py --model-name meta-llama/Llama-3.2-1B  --data-dir ./data/SEMEVAL-2021-task6-corpus/data --task 1  --adapter-path ./semeval_qlora_Llama-2-7b-hf --max-length 128 --tokenizer meta-llama/Llama-2-7b-hf

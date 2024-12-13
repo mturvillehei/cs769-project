@@ -1,4 +1,6 @@
 import sys
+
+import numpy as np
 import objsize
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
@@ -97,7 +99,7 @@ def generate_text(model, tokenizer, text, num_tokens=100):
             logits = logits[:, -1, :]
             probs = F.softmax(logits, dim=-1)
             top50probs, top50indices = torch.topk(probs, 50, dim=-1)
-            ix = torch.multinomial(top50probs, 1)
+            ix = torch.multinomial(top50probs.to(model.device), 1)
             next_token = torch.gather(top50indices, -1, ix)
             tokens = torch.cat((tokens, next_token), dim=1)
 
@@ -133,6 +135,10 @@ def train(args):
         args.model_name,
         quantization_config=nf4_config,
         attn_implementation='flash_attention_2'
+    ) if args.lora_type == 'qlora' else AutoModelForCausalLM.from_pretrained(
+        args.model_name,
+        torch_dtype=torch.bfloat16,
+        attn_implementation='flash_attention_2'
     )
 
     # Configure LoRA or QLoRA
@@ -159,14 +165,12 @@ def train(args):
         # For full fine-tuning, we don't need LoRA config
         model.train()  # Enable all parameters for training
         print("Using full fine-tuning")
-        return model
     else:
         raise ValueError(f"Invalid LoRA type: {args.lora_type}")
 
     if args.lora_type in ["lora", "qlora"]:
         model = get_peft_model(model, lora_config)
 
-    model = get_peft_model(model, lora_config)
     
         
     # Create training dataset
@@ -208,7 +212,7 @@ def train(args):
     for n, p in model.named_parameters():
         if p.requires_grad:
             param_count += p.numel()
-    print(f"Total params: {param_count}")
+    print(f"Total active params: {param_count}")
 
     # Training loop
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
@@ -241,7 +245,6 @@ def train(args):
 
             if torch.cuda.is_available():
                 gpu_max = torch.cuda.max_memory_allocated() / 1024 ** 3
-                print("Backward: " + str(gpu_max))
                 mem_consumption.append(gpu_max)
             # Generate sample output every 100 steps
             if step % 100 == 0:
@@ -258,9 +261,11 @@ def train(args):
 
         avg_loss = total_loss / len(train_loader)
         print(f"Epoch {epoch+1} average loss: {avg_loss:.4f}")
+        print(np.mean(mem_consumption))
         # Save checkpoint
-        checkpoint_path = f"semeval_checkpoint_epoch{epoch+1}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        model.save_pretrained(checkpoint_path)
+        if epoch + 1 == args.epochs:
+            checkpoint_path = f"semeval_{args.lora_type}_{args.model_name.split("/")[-1]}"
+            model.save_pretrained(checkpoint_path)
         
         # Validation
         model.eval()
@@ -277,7 +282,7 @@ def train(args):
         '''
 
 def main():
-    login(token='')
+    login(token='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')
     parser = argparse.ArgumentParser(description="SEMEVAL Fine-tuning")
     parser.add_argument("--model-name", default="meta-llama/Llama-2-7b-hf")
     parser.add_argument("--data-dir", required=True, help="Path to SEMEVAL dataset directory")

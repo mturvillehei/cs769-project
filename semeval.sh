@@ -1,1 +1,4 @@
-python semeval_finetuning.py --model-name meta-llama/Llama-2-7b-hf --data-dir ./data/SEMEVAL-2021-task6-corpus/data --batch-size 8 --epochs 3 --task 1 --lora-type qlora
+python semeval_finetuning.py --model-name meta-llama/Llama-3.2-1B --data-dir ./data/SEMEVAL-2021-task6-corpus/data --batch-size 8 --epochs 16 --task 1 --lora-type lora --max-length 128
+python semeval_finetuning.py --model-name meta-llama/Llama-3.2-1B --data-dir ./data/SEMEVAL-2021-task6-corpus/data --batch-size 8 --epochs 16 --task 1 --lora-type fft --learning-rate 1e-5 --max-length 128
+python semeval_finetuning.py --model-name meta-llama/Llama-3.2-1B --data-dir ./data/SEMEVAL-2021-task6-corpus/data --batch-size 8 --epochs 16 --task 1 --lora-type qlora --max-length 128
+python semeval_finetuning.py --model-name meta-llama/Llama-2-7b-hf --data-dir ./data/SEMEVAL-2021-task6-corpus/data --batch-size 8 --epochs 16 --task 1 --lora-type qlora --max-length 128

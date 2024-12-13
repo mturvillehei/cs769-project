@@ -12,7 +12,8 @@ import torch.nn.functional as F
 from collections import defaultdict
 import time
 import psutil
-from huggingface_hub import login
+
+
 
 class SEMEVALDataset(Dataset):
     def __init__(self, data_path, tokenizer, max_length=512, task=1, split='train'):
@@ -99,7 +100,7 @@ def generate_text(model, tokenizer, text, num_tokens=100):
     generated = tokenizer.decode(tokens[0], skip_special_tokens=False)
     try:
         techniques = generated.split("<tech>:")[1].strip()
-        return techniques.replace('</s>','').split(" , ")
+        return [i for i in techniques.replace('<|end_of_text|>','').split(" , ") if i != ""]
     except IndexError:
         print("Warning: Generated text did not contain <tech>: token")
         return []
@@ -109,7 +110,7 @@ class ModelEvaluator:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.args = args
         
-    def load_model(self, model_path, adapter_path=None):
+    def load_model(self, model_path, adapter_path=None, tokenizer_path=None):
         print(f"Loading model from {model_path}")
         
         # Match training quantization setup
@@ -120,7 +121,7 @@ class ModelEvaluator:
             bnb_4bit_compute_dtype=torch.bfloat16
         )
 
-        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.SPECIAL_TOKENS_ATTRIBUTES.append('text_tag')
         tokenizer.SPECIAL_TOKENS_ATTRIBUTES.append('tech_tag')
@@ -145,6 +146,8 @@ class ModelEvaluator:
         if adapter_path:
             print(f"Loading adapter from {adapter_path}")
             model = PeftModel.from_pretrained(model, adapter_path)
+        else:
+            model = AutoModelForCausalLM.from_pretrained(model_path)
         
         model.resize_token_embeddings(len(tokenizer))
         return model, tokenizer
@@ -248,15 +251,16 @@ def main():
     parser.add_argument("--model-name", default="meta-llama/Llama-2-7b-hf")
     parser.add_argument("--data-dir", required=True, help="Path to SEMEVAL dataset directory")
     parser.add_argument("--task", type=int, default=1, choices=[1, 2])
-    parser.add_argument("--adapter-path", help="Path to LoRA/QLoRA adapter")
+    parser.add_argument("--adapter-path", default=None, help="Path to LoRA/QLoRA adapter")
     parser.add_argument("--max-length", type=int, default=512)
     parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument("--tokenizer", type=str, default="meta-llama/Llama-2-7b-hf")
     args = parser.parse_args()
     
     evaluator = ModelEvaluator(args)
     
     # Load model and tokenizer
-    model, tokenizer = evaluator.load_model(args.model_name, args.adapter_path)
+    model, tokenizer = evaluator.load_model(args.model_name, args.adapter_path, args.tokenizer)
     
     # Load test dataset
     test_dataset = SEMEVALDataset(

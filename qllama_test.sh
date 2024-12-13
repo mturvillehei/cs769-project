@@ -1,1 +1,0 @@
-python qllama_test.py --model meta-llama/Llama-2-7b-hf --rank 8 --alpha 32 --test-input "Test input to verify model is working."
